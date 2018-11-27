@@ -64,7 +64,7 @@ func getClient() *ecrClient {
 
 func newClient() (client ecrDescriber) {
 	config := aws.NewConfig()
-	timeout := 500 * time.Millisecond
+	timeout := 5000 * time.Millisecond
 	config = config.WithHTTPClient(&http.Client{Timeout: timeout})
 	return ecr.New(session.New(config))
 }
