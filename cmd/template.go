@@ -4,8 +4,8 @@ import (
 	"errors"
 	"fmt"
 
-	"github.com/sethpollack/bogie/bogie"
-	bogieio "github.com/sethpollack/bogie/io"
+	"github.com/BeenVerifiedInc/bogie/bogie"
+	bogieio "github.com/BeenVerifiedInc/bogie/io"
 	"github.com/spf13/cobra"
 	yaml "gopkg.in/yaml.v2"
 )

@@ -4,10 +4,10 @@ import (
 	"io"
 	"text/template"
 
-	"github.com/sethpollack/bogie/crypto"
-	"github.com/sethpollack/bogie/ecr"
-	"github.com/sethpollack/bogie/file"
-	"github.com/sethpollack/bogie/types"
+	"github.com/BeenVerifiedInc/bogie/crypto"
+	"github.com/BeenVerifiedInc/bogie/ecr"
+	"github.com/BeenVerifiedInc/bogie/file"
+	"github.com/BeenVerifiedInc/bogie/types"
 )
 
 func initFuncs(c *context, b *Bogie) template.FuncMap {

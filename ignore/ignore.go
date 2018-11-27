@@ -8,7 +8,7 @@ import (
 	"path/filepath"
 	"strings"
 
-	bogieio "github.com/sethpollack/bogie/io"
+	bogieio "github.com/BeenVerifiedInc/bogie/io"
 )
 
 // BogieIgnore default name of an ignorefile.

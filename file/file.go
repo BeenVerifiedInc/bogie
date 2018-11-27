@@ -4,7 +4,7 @@ import (
 	"bytes"
 	"io"
 
-	bogieio "github.com/sethpollack/bogie/io"
+	bogieio "github.com/BeenVerifiedInc/bogie/io"
 )
 
 var templater func(text string, out io.Writer) error

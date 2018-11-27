@@ -1,7 +1,7 @@
 package main
 
 import (
-	"github.com/sethpollack/bogie/cmd"
+	"github.com/BeenVerifiedInc/bogie/cmd"
 	"github.com/sirupsen/logrus"
 	"go.mozilla.org/sops/logging"
 )

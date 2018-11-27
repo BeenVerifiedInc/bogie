@@ -3,7 +3,7 @@ package cmd
 import (
 	"fmt"
 
-	"github.com/sethpollack/bogie/version"
+	"github.com/BeenVerifiedInc/bogie/version"
 	"github.com/spf13/cobra"
 )
 

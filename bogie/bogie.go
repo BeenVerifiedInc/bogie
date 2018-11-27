@@ -11,7 +11,7 @@ import (
 	"text/template"
 
 	"github.com/Masterminds/sprig"
-	"github.com/sethpollack/bogie/ignore"
+	"github.com/BeenVerifiedInc/bogie/ignore"
 )
 
 type ApplicationInput struct {

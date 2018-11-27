@@ -9,7 +9,7 @@ import (
 
 	dotaccess "github.com/go-bongo/go-dotaccess"
 	"github.com/imdario/mergo"
-	bogieio "github.com/sethpollack/bogie/io"
+	bogieio "github.com/BeenVerifiedInc/bogie/io"
 	yaml "gopkg.in/yaml.v2"
 )
 
