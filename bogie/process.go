@@ -98,6 +98,7 @@ func fileExists(filename string) bool {
 	}
 	return !info.IsDir()
 }
+
 func setValueContext(app *ApplicationInput, old *context) (*context, error) {
 	c := context{}
 
