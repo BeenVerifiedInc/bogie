@@ -8,9 +8,9 @@ import (
 	"sort"
 	"strings"
 
+	bogieio "github.com/BeenVerifiedInc/bogie/io"
 	dotaccess "github.com/go-bongo/go-dotaccess"
 	"github.com/imdario/mergo"
-	bogieio "github.com/BeenVerifiedInc/bogie/io"
 	yaml "gopkg.in/yaml.v2"
 )
 
@@ -102,14 +102,15 @@ func setValueContext(app *ApplicationInput, old *context) (*context, error) {
 	c := context{}
 
 	files := []string{}
-	if val, ok := old.Values["default_region"]; ok {
-		regionalFileName := fmt.Sprintf("%s/%s.%s.values.yaml", app.Templates, app.Env, val)
-		if fileExists(regionalFileName) {
-			files = append(files, regionalFileName)
-		}
-	}
 
 	if app.Env != "" {
+		if defaultRegion, ok := old.Values["default_region"]; ok {
+			regionalFileName := fmt.Sprintf("%s/%s.%s.values.yaml", app.Templates, app.Env, defaultRegion)
+			if fileExists(regionalFileName) {
+				files = append(files, regionalFileName)
+			}
+		}
+
 		files = append(files, fmt.Sprintf("%s/%s.values.yaml", app.Templates, app.Env))
 	}
 
