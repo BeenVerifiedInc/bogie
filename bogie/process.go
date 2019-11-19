@@ -2,6 +2,7 @@ package bogie
 
 import (
 	"fmt"
+	"os"
 	"path/filepath"
 	"regexp"
 	"sort"
@@ -90,10 +91,23 @@ func genContext(envfile string) (*context, error) {
 	return &c, nil
 }
 
+func fileExists(filename string) bool {
+	info, err := os.Stat(filename)
+	if os.IsNotExist(err) {
+		return false
+	}
+	return !info.IsDir()
+}
 func setValueContext(app *ApplicationInput, old *context) (*context, error) {
 	c := context{}
 
 	files := []string{}
+	if val, ok := old.Values["default_region"]; ok {
+		regionalFileName := fmt.Sprintf("%s/%s.%s.values.yaml", app.Templates, app.Env, val)
+		if fileExists(regionalFileName) {
+			files = append(files, regionalFileName)
+		}
+	}
 
 	if app.Env != "" {
 		files = append(files, fmt.Sprintf("%s/%s.values.yaml", app.Templates, app.Env))
