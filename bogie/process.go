@@ -2,12 +2,12 @@ package bogie
 
 import (
 	"fmt"
-	"os"
 	"path/filepath"
 	"regexp"
 	"sort"
 	"strings"
 
+	"github.com/BeenVerifiedInc/bogie/common"
 	bogieio "github.com/BeenVerifiedInc/bogie/io"
 	dotaccess "github.com/go-bongo/go-dotaccess"
 	"github.com/imdario/mergo"
@@ -91,14 +91,6 @@ func genContext(envfile string) (*context, error) {
 	return &c, nil
 }
 
-func fileExists(filename string) bool {
-	info, err := os.Stat(filename)
-	if os.IsNotExist(err) {
-		return false
-	}
-	return !info.IsDir()
-}
-
 func setValueContext(app *ApplicationInput, old *context) (*context, error) {
 	c := context{}
 
@@ -107,7 +99,7 @@ func setValueContext(app *ApplicationInput, old *context) (*context, error) {
 	if app.Env != "" {
 		if defaultRegion, ok := old.Values["default_region"]; ok {
 			regionalFileName := fmt.Sprintf("%s/%s.%s.values.yaml", app.Templates, app.Env, defaultRegion)
-			if fileExists(regionalFileName) {
+			if common.FileExists(regionalFileName) {
 				files = append(files, regionalFileName)
 			}
 		}

@@ -9,6 +9,7 @@ import (
 	"strings"
 	"time"
 
+	"github.com/BeenVerifiedInc/bogie/common"
 	"github.com/google/go-github/github"
 	"go.mozilla.org/sops/decrypt"
 	"golang.org/x/oauth2"
@@ -58,8 +59,8 @@ func ReadFile(filename string) ([]byte, error) {
 func DecryptFile(filename, format string) ([]byte, error) {
 	if ok := isValidUrl(filename); !ok {
 		returnValue, err := decrypt.File(filename, format)
-		if err != nil {
-			fmt.Printf("Error attempting to decrypt %v\n", filename)
+		if err != nil && common.FileExists(filename) {
+			fmt.Printf("Error attempting to decrypt Url %v\n", filename)
 		}
 		return returnValue, err
 	}
@@ -71,7 +72,7 @@ func DecryptFile(filename, format string) ([]byte, error) {
 
 	returnValue, err := decrypt.Data([]byte(content), format)
 	if err != nil {
-		fmt.Printf("Error attempting to decrypt %v\n", filename)
+		fmt.Printf("Error attempting to decrypt content %v\n", filename)
 	}
 	return returnValue, err
 }
