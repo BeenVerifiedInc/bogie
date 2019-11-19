@@ -57,7 +57,11 @@ func ReadFile(filename string) ([]byte, error) {
 
 func DecryptFile(filename, format string) ([]byte, error) {
 	if ok := isValidUrl(filename); !ok {
-		return decrypt.File(filename, format)
+		returnValue, err := decrypt.File(filename, format)
+		if err != nil {
+			fmt.Printf("Error attempting to decrypt %v\n", filename)
+		}
+		return returnValue, err
 	}
 
 	content, err := readRepoFile(filename)
@@ -65,7 +69,11 @@ func DecryptFile(filename, format string) ([]byte, error) {
 		return nil, err
 	}
 
-	return decrypt.Data([]byte(content), format)
+	returnValue, err := decrypt.Data([]byte(content), format)
+	if err != nil {
+		fmt.Printf("Error attempting to decrypt %v\n", filename)
+	}
+	return returnValue, err
 }
 
 func getClient() (client *github.Client) {
