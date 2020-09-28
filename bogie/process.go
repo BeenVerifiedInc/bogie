@@ -143,7 +143,6 @@ func setValueContext(app *ApplicationInput, old *context) (*context, error) {
 			return &c, err
 		}
 		processSecretMap(&tmp)
-		fmt.Printf("Testing %v\n", tmp)
 		mergo.Merge(&c.Values, tmp)
 	}
 
