@@ -142,7 +142,7 @@ func setValueContext(app *ApplicationInput, old *context) (*context, error) {
 		if err != nil {
 			return &c, err
 		}
-		processSecretMap(&tmp)
+		//processSecretMap(&tmp)
 		mergo.Merge(&c.Values, tmp)
 	}
 
