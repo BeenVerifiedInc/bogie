@@ -1,7 +1,10 @@
 package bogie
 
 import (
+	"encoding/json"
+	"errors"
 	"fmt"
+	"os"
 	"path/filepath"
 	"regexp"
 	"sort"
@@ -12,6 +15,12 @@ import (
 	dotaccess "github.com/go-bongo/go-dotaccess"
 	"github.com/imdario/mergo"
 	yaml "gopkg.in/yaml.v2"
+
+	"encoding/base64"
+	"github.com/aws/aws-sdk-go/aws"
+	"github.com/aws/aws-sdk-go/aws/awserr"
+	"github.com/aws/aws-sdk-go/aws/session"
+	"github.com/aws/aws-sdk-go/service/secretsmanager"
 )
 
 type applicationOutput struct {
@@ -133,7 +142,8 @@ func setValueContext(app *ApplicationInput, old *context) (*context, error) {
 		if err != nil {
 			return &c, err
 		}
-
+		processSecretMap(&tmp)
+		fmt.Printf("Testing %v\n", tmp)
 		mergo.Merge(&c.Values, tmp)
 	}
 
@@ -195,4 +205,111 @@ func processApplication(conf config) error {
 	}
 
 	return nil
+}
+
+var (
+	secretCache = make(map[string]map[string]string, 0)
+)
+
+func getSecret(secretName string) (map[string]string, error){
+	cachedValue, ok := secretCache[secretName]
+	if ok {
+		return cachedValue, nil
+	}
+	region := os.Getenv("AWS_DEFAULT_REGION")
+
+	//Create a Secrets Manager client
+	svc := secretsmanager.New(session.New(),
+		aws.NewConfig().WithRegion(region))
+	input := &secretsmanager.GetSecretValueInput{
+		SecretId:     aws.String(secretName),
+		VersionStage: aws.String("AWSCURRENT"), // VersionStage defaults to AWSCURRENT if unspecified
+	}
+
+	result, err := svc.GetSecretValue(input)
+	if err != nil {
+		if aerr, ok := err.(awserr.Error); ok {
+			switch aerr.Code() {
+			case secretsmanager.ErrCodeDecryptionFailure:
+				// Secrets Manager can't decrypt the protected secret text using the provided KMS key.
+				fmt.Println(secretsmanager.ErrCodeDecryptionFailure, aerr.Error())
+
+			case secretsmanager.ErrCodeInternalServiceError:
+				// An error occurred on the server side.
+				fmt.Println(secretsmanager.ErrCodeInternalServiceError, aerr.Error())
+
+			case secretsmanager.ErrCodeInvalidParameterException:
+				// You provided an invalid value for a parameter.
+				fmt.Println(secretsmanager.ErrCodeInvalidParameterException, aerr.Error())
+
+			case secretsmanager.ErrCodeInvalidRequestException:
+				// You provided a parameter value that is not valid for the current state of the resource.
+				fmt.Println(secretsmanager.ErrCodeInvalidRequestException, aerr.Error())
+
+			case secretsmanager.ErrCodeResourceNotFoundException:
+				// We can't find the resource that you asked for.
+				fmt.Println(secretsmanager.ErrCodeResourceNotFoundException, aerr.Error())
+			}
+		} else {
+			// Print the error, cast err to awserr.Error to get the Code and
+			// Message from an error.
+			fmt.Println(err.Error())
+		}
+		fmt.Printf("%v\n", err)
+		return nil, err
+	}
+
+	// Decrypts secret using the associated KMS CMK.
+	// Depending on whether the secret is a string or binary, one of these fields will be populated.
+	var secretString, decodedBinarySecret string
+	if result.SecretString != nil {
+		secretString = *result.SecretString
+		returnValue := make(map[string]string, 0)
+		err = json.Unmarshal([]byte(secretString), &returnValue)
+		secretCache[secretName] = returnValue
+		return returnValue, nil
+	} else {
+		decodedBinarySecretBytes := make([]byte, base64.StdEncoding.DecodedLen(len(result.SecretBinary)))
+		len, err := base64.StdEncoding.Decode(decodedBinarySecretBytes, result.SecretBinary)
+		if err != nil {
+			fmt.Println("Base64 Decode Error:", err)
+			return nil, err
+		}
+		decodedBinarySecret = string(decodedBinarySecretBytes[:len])
+		returnValue := make(map[string]string, 0)
+		err = json.Unmarshal([]byte(decodedBinarySecret), &returnValue)
+		secretCache[secretName] = returnValue
+		return returnValue, nil
+	}
+}
+
+func processSecretMap(sourceMap *map[interface{}]interface{}) error {
+	app, ok := (*sourceMap)["app"].(map[interface{}]interface{})
+	if !ok {
+		return errors.New("received invalid map in processSecretMap")
+	}
+	secret, ok := app["secret"].(map[interface{}]interface{})
+	if !ok {
+		return errors.New("no secret sub-section in app section")
+	}
+	for key, value := range secret {
+		_, ok = value.(string)
+		if ok {
+			continue
+		}
+		mapValue := value.(map[interface{}]interface{})
+		secretArn, ok := mapValue["secret_arn"].(string)
+		if !ok {
+			continue
+		}
+
+		keyName, ok := mapValue["key_name"].(string)
+		if !ok {
+			continue
+		}
+		secretValue, _ := getSecret(secretArn)
+		secret[key] = secretValue[keyName]
+	}
+	return nil
+
 }
