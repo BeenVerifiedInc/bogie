@@ -47,6 +47,7 @@ func processApplications(b *Bogie) ([]*applicationOutput, error) {
 	if err != nil {
 		return nil, err
 	}
+	fmt.Printf("Secret Name is %s\n ", b.FlaggedSecret)
 
 	appOutputs := []*applicationOutput{}
 	re := regexp.MustCompile(b.AppRegex)
