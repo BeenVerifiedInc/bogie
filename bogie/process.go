@@ -43,6 +43,7 @@ type config struct {
 
 func processApplications(b *Bogie) ([]*applicationOutput, error) {
 	c, err := genContext(b.EnvFile)
+	fmt.Printf("Environment file is %v\n", c)
 	if err != nil {
 		return nil, err
 	}
