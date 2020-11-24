@@ -25,6 +25,7 @@ type bogieOpts struct {
 	templatesPath   string
 	ignoreFile      string
 	skipImageLookup bool
+	flaggedSecret   string
 }
 
 var o bogieOpts
@@ -49,6 +50,8 @@ func init() {
 
 	templateCmd.Flags().StringVarP(&o.ignoreFile, "ignore-file", "i", ".bogieignore", ".bogieignore file")
 	templateCmd.Flags().BoolVarP(&o.skipImageLookup, "skip-image-lookup", "s", false, "Skip image lookup in template function latestImage")
+
+	templateCmd.Flags().StringVarP(&o.flaggedSecret, "secret-name", "z", "", "Secret Name to flag and show output for")
 }
 
 var template_example = `
@@ -125,6 +128,7 @@ func newBogie(o *bogieOpts) (*bogie.Bogie, error) {
 		OutFormat:       o.outFormat,
 		LDelim:          o.lDelim,
 		RDelim:          o.rDelim,
+		FlaggedSecret:   o.flaggedSecret,
 		SkipImageLookup: o.skipImageLookup,
 	}
 

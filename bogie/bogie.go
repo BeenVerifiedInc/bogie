@@ -33,6 +33,7 @@ type Bogie struct {
 	Rules             *ignore.Rules
 	SkipImageLookup   bool   `yaml:"skip_image_lookup"`
 	AppRegex          string `yaml:"app_regex"`
+	FlaggedSecret     string
 }
 
 func (b *Bogie) Run() error {

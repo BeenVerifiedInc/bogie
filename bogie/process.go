@@ -4,6 +4,7 @@ import (
 	"encoding/json"
 	"errors"
 	"fmt"
+	"github.com/BeenVerifiedInc/go-common/log"
 	"os"
 	"path/filepath"
 	"regexp"
@@ -49,6 +50,8 @@ func processApplications(b *Bogie) ([]*applicationOutput, error) {
 
 	appOutputs := []*applicationOutput{}
 	re := regexp.MustCompile(b.AppRegex)
+	//generate list of flagged apps
+	flaggedApplicationInputs := make([]ApplicationInput, 0)
 	for _, app := range b.ApplicationInputs {
 		if b.AppRegex != "" {
 			if !re.MatchString(app.Name) {
@@ -56,9 +59,12 @@ func processApplications(b *Bogie) ([]*applicationOutput, error) {
 			}
 		}
 
-		c, err := setValueContext(app, c)
+		c, isFlaggedBySecret, err := setValueContext(app, c, b.FlaggedSecret)
 		if err != nil {
 			return nil, err
+		}
+		if isFlaggedBySecret {
+			flaggedApplicationInputs = append(flaggedApplicationInputs, app)
 		}
 
 		releaseDir := filepath.Join(b.OutPath, app.Name)
@@ -75,6 +81,12 @@ func processApplications(b *Bogie) ([]*applicationOutput, error) {
 		if err != nil {
 			return nil, err
 		}
+	}
+	flaggedAppJson, err := json.Marshal(flaggedApplicationInputs)
+	if err != nil {
+		fmt.Fprintf(os.Stderr, "Error marshalling json for application inputs. %v\n", err)
+	} else {
+		fmt.Printf("%s\n", string(flaggedAppJson))
 	}
 
 	return appOutputs, nil
@@ -100,7 +112,7 @@ func genContext(envfile string) (*context, error) {
 	return &c, nil
 }
 
-func setValueContext(app *ApplicationInput, old *context) (*context, error) {
+func setValueContext(app *ApplicationInput, old *context, flaggedSecret string) (*context, bool, error) {
 	c := context{}
 
 	files := []string{}
@@ -128,21 +140,32 @@ func setValueContext(app *ApplicationInput, old *context) (*context, error) {
 			file == fmt.Sprintf("%s/values.yaml", app.Templates)
 	}
 
+	isFlaggedBySecret := false
+
 	for _, file := range files {
 		b, err := bogieio.DecryptFile(file, "yaml")
 		if err != nil {
 			if dontWarn(file) {
 				continue
 			}
-			return &c, err
+			return &c, false, err
 		}
 
 		var tmp map[interface{}]interface{}
 		err = yaml.Unmarshal(b, &tmp)
 		if err != nil {
-			return &c, err
+			return &c, false, err
 		}
-		processSecretMap(&tmp)
+		lookedUpSecretNames, secretMapErr := processSecretMap(&tmp)
+		if secretMapErr != nil {
+			return &c, false, err
+		} else {
+			for _, v := range lookedUpSecretNames {
+				if flaggedSecret == v {
+					isFlaggedBySecret = true
+				}
+			}
+		}
 		mergo.Merge(&c.Values, tmp)
 	}
 
@@ -152,11 +175,11 @@ func setValueContext(app *ApplicationInput, old *context) (*context, error) {
 		splits := strings.SplitN(keyVal, "=", 2)
 		err := dotaccess.Set(c.Values, splits[0], splits[1])
 		if err != nil {
-			return &c, err
+			return &c, isFlaggedBySecret, err
 		}
 	}
 
-	return &c, nil
+	return &c, isFlaggedBySecret, nil
 }
 
 func processApplication(conf config) error {
@@ -282,15 +305,16 @@ func getSecret(secretName string) (map[string]string, error){
 	}
 }
 
-func processSecretMap(sourceMap *map[interface{}]interface{}) error {
+func processSecretMap(sourceMap *map[interface{}]interface{}) ([]string, error) {
 	app, ok := (*sourceMap)["app"].(map[interface{}]interface{})
 	if !ok {
-		return errors.New("received invalid map in processSecretMap")
+		return nil, errors.New("received invalid map in processSecretMap")
 	}
 	secret, ok := app["secret"].(map[interface{}]interface{})
 	if !ok {
-		return errors.New("no secret sub-section in app section")
+		return nil, errors.New("no secret sub-section in app section")
 	}
+	lookedUpSecrets := make([]string, 0)
 	for key, value := range secret {
 		_, ok = value.(string)
 		if ok {
@@ -307,8 +331,9 @@ func processSecretMap(sourceMap *map[interface{}]interface{}) error {
 			continue
 		}
 		secretValue, _ := getSecret(secretArn)
+		lookedUpSecrets = append(lookedUpSecrets, secretArn)
 		secret[key] = secretValue[keyName]
 	}
-	return nil
+	return lookedUpSecrets, nil
 
 }
