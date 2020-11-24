@@ -157,9 +157,7 @@ func setValueContext(app *ApplicationInput, old *context, flaggedSecret string) 
 			return &c, false, err
 		}
 		lookedUpSecretNames, secretMapErr := processSecretMap(&tmp)
-		if secretMapErr != nil {
-			return &c, false, err
-		} else {
+		if secretMapErr == nil {
 			for _, v := range lookedUpSecretNames {
 				if flaggedSecret == v {
 					isFlaggedBySecret = true
