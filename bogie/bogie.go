@@ -101,14 +101,21 @@ func renderTemplateToDir(b *Bogie, apps []*applicationOutput) error {
 			if err != nil {
 				return err
 			}
-			defer f.Close()
 
 			w := bufio.NewWriter(f)
-			defer w.Flush()
 
 			if _, err := io.Copy(w, buff); err != nil {
 				return err
 			}
+			err = w.Flush()
+			if err != nil {
+				fmt.Fprintf(os.Stderr, "failed to flush output for rendering template.  %v\n", err)
+			}
+			err = f.Close()
+			if err != nil {
+				fmt.Fprintf(os.Stderr, "failed to close file. %v\n", err)
+			}
+
 		}
 	}
 
