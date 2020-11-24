@@ -50,7 +50,7 @@ func processApplications(b *Bogie) ([]*applicationOutput, error) {
 	appOutputs := []*applicationOutput{}
 	re := regexp.MustCompile(b.AppRegex)
 	//generate list of flagged apps
-	flaggedApplicationInputs := make([]ApplicationInput, 0)
+	flaggedApplicationInputs := make([]*ApplicationInput, 0)
 	for _, app := range b.ApplicationInputs {
 		if b.AppRegex != "" {
 			if !re.MatchString(app.Name) {
