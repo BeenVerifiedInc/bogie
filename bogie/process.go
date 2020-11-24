@@ -4,7 +4,6 @@ import (
 	"encoding/json"
 	"errors"
 	"fmt"
-	"github.com/BeenVerifiedInc/go-common/log"
 	"os"
 	"path/filepath"
 	"regexp"
