@@ -84,7 +84,7 @@ func processApplications(b *Bogie) ([]*applicationOutput, error) {
 	flaggedAppJson, err := json.Marshal(flaggedApplicationInputs)
 	if err != nil {
 		fmt.Fprintf(os.Stderr, "Error marshalling json for application inputs. %v\n", err)
-	} else {
+	} else if len(flaggedApplicationInputs) > 0 {
 		fmt.Printf("%s\n", string(flaggedAppJson))
 	}
 
@@ -274,7 +274,7 @@ func getSecret(secretName string) (map[string]string, error){
 			// Message from an error.
 			fmt.Println(err.Error())
 		}
-		fmt.Printf("%v\n", err)
+		fmt.Printf("Error getting secret %s: %v\n", secretName, err)
 		return nil, err
 	}
 
